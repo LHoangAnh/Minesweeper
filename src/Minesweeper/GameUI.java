@@ -10,10 +10,12 @@ import java.awt.Insets;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
+import javax.swing.Timer;
 
 public class GameUI {
 	private JFrame frame;
@@ -22,6 +24,10 @@ public class GameUI {
 	private final MineBoard board;
 	private boolean gameOver = false;
 	private int tilesClicked = 0;
+	private JButton resetButton;
+	private JLabel timerLabel;
+	private Timer timer;
+	private int elapsedSeconds = 0;
 
 	public GameUI(MineBoard board) {
 		this.board = board;
@@ -45,6 +51,26 @@ public class GameUI {
 		boardPanel = new JPanel(new GridLayout(board.getNumRows(), board.getNumCols()));
 		boardPanel.setBackground(Color.gray);
 		frame.add(boardPanel, BorderLayout.CENTER);
+
+		textLabel = new JLabel("Minesweeper: " + board.getMineCount(), SwingConstants.CENTER);
+		textLabel.setFont(new Font("Arial", Font.BOLD, 25));
+
+		timerLabel = new JLabel("Time: 0s", SwingConstants.RIGHT);
+		timerLabel.setFont(new Font("Arial", Font.PLAIN, 18));
+
+		resetButton = new JButton("Reset");
+		resetButton.setFont(new Font("Arial", Font.PLAIN, 25));
+		resetButton.addActionListener(e -> resetGame());
+
+		JPanel topPanel = new JPanel(new BorderLayout());
+		topPanel.add(resetButton, BorderLayout.WEST);
+		topPanel.add(textLabel, BorderLayout.CENTER);
+		topPanel.add(timerLabel, BorderLayout.EAST);
+		frame.add(topPanel, BorderLayout.NORTH);
+		resetButton.setFocusPainted(false);
+		resetButton.setBorderPainted(false);
+		resetButton.setBackground(Color.LIGHT_GRAY);
+
 	}
 
 	public void setupBoard() {
@@ -91,6 +117,7 @@ public class GameUI {
 		}
 		gameOver = true;
 		textLabel.setText("Game Over!");
+		timer.stop();
 	}
 
 	private void checkMine(int r, int c) {
@@ -137,6 +164,7 @@ public class GameUI {
 		if (tilesClicked == board.getNumRows() * board.getNumCols() - board.getMineList().size()) {
 			gameOver = true;
 			textLabel.setText("Mines Cleared!");
+			timer.stop();
 		}
 	}
 
@@ -145,4 +173,42 @@ public class GameUI {
 			return 0;
 		return board.isMine(board.getTile(r, c)) ? 1 : 0;
 	}
+
+	private void resetGame() {
+		board.getMineList().clear();
+		board.setMines();
+		tilesClicked = 0;
+		gameOver = false;
+		textLabel.setText("Minesweeper: " + board.getMineCount());
+
+		MineTile[][] tiles = board.getBoard();
+		boardPanel.removeAll();
+
+		for (MineTile[] row : tiles) {
+			for (MineTile tile : row) {
+				tile.setEnabled(true);
+				tile.setText("");
+				boardPanel.add(tile);
+			}
+		}
+
+		elapsedSeconds = 0;
+		timerLabel.setText("Time: 0s");
+		if (timer != null) {
+			timer.stop();
+		}
+		startTimer();
+
+		frame.revalidate();
+		frame.repaint();
+	}
+
+	public void startTimer() {
+		timer = new Timer(1000, e -> {
+			elapsedSeconds++;
+			timerLabel.setText("Time: " + elapsedSeconds + "s");
+		});
+		timer.start();
+	}
+
 }

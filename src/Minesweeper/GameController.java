@@ -15,5 +15,7 @@ public class GameController {
 		board.initializeBoard();
 		board.setMines();
 		ui.setupBoard();
+		ui.startTimer();
 	}
+
 }
